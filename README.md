@@ -1,16 +1,25 @@
-# text_to_image_ai
+# Text to Image AI Generator
 
-A new Flutter project.
+A Flutter application that generates images from text prompts using the Stability AI API. This app allows users to enter a prompt and receive an image in response, which can be downloaded or shared.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- **Text Input**: Enter a prompt to generate an image.
+- **Image Generation**: Utilize Stability AI's image generation capabilities.
+- **Display Generated Images**: View generated images within the app.
+- **Download & Share**: Save generated images to your device or share them with others.
+- **Responsive Design**: Mobile-friendly layout with single child scroll view for better usability.
 
-A few resources to get you started if this is your first Flutter project:
+## Installation
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Prerequisites
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter SDK installed on your machine.
+- An API key from Stability AI to access the image generation service.
+
+### Steps to Set Up
+
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/mdtaosifhossain3/flutter-Ai-image-generator-app.git
+   cd flutter-Ai-image-generator-app
