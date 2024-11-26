@@ -2,11 +2,17 @@ import 'dart:io';
 import 'package:animation_wrappers/animation_wrappers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share/share.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:popover/popover.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:text_to_image_ai/colors.dart';
-import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:text_to_image_ai/views/welcome_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -23,7 +29,7 @@ class _HomeViewState extends State<HomeView> {
 
   Future<void> generateImage(String prompt) async {
     FocusScope.of(context).unfocus();
-    const apiKey = 'sk-UTOwzsOuxYSGqjJiioIST1r1CvfsLMLrQ0WVbctA1YUD7B4b';
+
     final url = Uri.parse(
         'https://api.stability.ai/v2beta/stable-image/generate/ultra');
 
@@ -35,7 +41,7 @@ class _HomeViewState extends State<HomeView> {
 
     // Set up headers
     final headers = {
-      'Authorization': 'Bearer $apiKey',
+      'Authorization': 'Bearer ${dotenv.env["API_KEY"]}',
       'Accept': 'image/*',
     };
 
@@ -64,7 +70,9 @@ class _HomeViewState extends State<HomeView> {
         throw Exception('Error ${response.statusCode}: $responseData');
       }
     } catch (e) {
-      print('Failed to generate image: $e');
+      if (kDebugMode) {
+        print('Failed to generate image: $e');
+      }
     } finally {
       setState(() {
         isLoading = false;
@@ -72,17 +80,45 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  Future<void> downloadImage() async {
-    if (imageBytes == null) return;
+  Future<void> saveImageToGallery() async {
+    // Request storage permission
+    final status = await Permission.storage.request();
+    if (status.isGranted) {
+      try {
+        if (imageBytes == null) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Something went wrong. try again later.")));
+          return;
+        }
 
-    final directory = await getTemporaryDirectory();
-    final filePath = '${directory.path}/generated_image.webp';
-    final file = File(filePath);
-    await file.writeAsBytes(imageBytes!);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Image saved $filePath")),
-    );
+        final directory = await getTemporaryDirectory();
+        final filePath = '${directory.path}/generated_image.webp';
+        final file = File(filePath);
+        await file.writeAsBytes(imageBytes!);
+        //  await ImageGallerySaver.saveFile(filePath);
+        await ImageGallerySaverPlus.saveFile(filePath);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("Saved to Gallery")));
+      } on SocketException catch (e) {
+        if (kDebugMode) {
+          print("Error saving image: $e");
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Error saving image: ${e.toString()}")));
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print("Error saving image: $e");
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Error saving image")));
+        }
+      }
+    } else {
+      if (kDebugMode) {
+        print("Storage permission denied");
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Storage permission denied")));
+      }
+    }
   }
 
   Future<void> shareImage() async {
@@ -92,14 +128,35 @@ class _HomeViewState extends State<HomeView> {
     final filePath = '${directory.path}/shared_image.webp';
     final file = File(filePath);
     await file.writeAsBytes(imageBytes!);
+    await Share.shareXFiles([XFile(filePath)]);
+  }
 
-    Share.shareFiles([filePath], text: 'Check out this generated image!');
+  // Function to send a message to the SMS app
+  Future<void> sendStopMessage() async {
+    const phoneNumber = '21213';
+    const message = 'STOP chtai';
+
+    final Uri smsUri = Uri(
+      scheme: 'sms',
+      path: phoneNumber,
+      queryParameters: {'body': message}, // pre-fill message
+    );
+
+    // Check if the URL can be launched (i.e., if SMS is available)
+    if (await canLaunchUrl(smsUri)) {
+      await launchUrl(smsUri); // Opens SMS app with pre-filled message
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not launch SMS')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: MyColors.primaryColor,
         foregroundColor: MyColors.whiteColor,
         centerTitle: true,
@@ -107,6 +164,43 @@ class _HomeViewState extends State<HomeView> {
           "Text to Image Generator",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          Builder(
+            builder: (context) {
+              return IconButton(
+                  onPressed: () async {
+                    await showPopover(
+                        context: context,
+                        bodyBuilder: (context) => Column(
+                              children: [
+                                TextButton(
+                                    onPressed: () async {
+                                      await sendStopMessage();
+                                      await Future.delayed(
+                                          const Duration(seconds: 6));
+                                      Navigator.push(context,
+                                          MaterialPageRoute(builder: (_) {
+                                        return WelcomePage();
+                                      }));
+                                    },
+                                    child: const Text(
+                                      "Unsubscribed",
+                                      style: TextStyle(color: Colors.red),
+                                    ))
+                              ],
+                            ),
+                        width: 120,
+                        height: 50,
+                        backgroundColor: MyColors.blackColor,
+                        direction: PopoverDirection.bottom);
+                  },
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: Colors.black,
+                  ));
+            },
+          )
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -181,7 +275,7 @@ class _HomeViewState extends State<HomeView> {
                               color: MyColors.blackColor,
                               borderRadius: BorderRadius.circular(8)),
                           child: IconButton(
-                              onPressed: downloadImage,
+                              onPressed: saveImageToGallery,
                               icon: Icon(
                                 Icons.download,
                                 color: MyColors.primaryColor,
