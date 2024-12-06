@@ -11,6 +11,7 @@ import 'package:popover/popover.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:text_to_image_ai/colors.dart';
 import 'package:http/http.dart' as http;
+import 'package:text_to_image_ai/main.dart';
 import 'package:text_to_image_ai/views/welcome_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -49,6 +50,14 @@ class _HomeViewState extends State<HomeView> {
     setState(() {
       isLoading = true;
     });
+
+    if (prompt.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Field Can't be empty")));
+      setState(() {
+        isLoading = false;
+      });
+    }
 
     try {
       // Send POST request with multipart form data
@@ -157,8 +166,9 @@ class _HomeViewState extends State<HomeView> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: MyColors.primaryColor,
+        backgroundColor: Color(0xff455A64),
         foregroundColor: MyColors.whiteColor,
+        elevation: 10.0,
         centerTitle: true,
         title: const Text(
           "Text to Image Generator",
@@ -202,12 +212,11 @@ class _HomeViewState extends State<HomeView> {
           )
         ],
       ),
+      backgroundColor: MyColors.backgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: SingleChildScrollView(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Column(
                 children: [
@@ -216,13 +225,18 @@ class _HomeViewState extends State<HomeView> {
                   ),
                   TextFormField(
                     controller: _textEditingController,
+                    cursorColor: MyColors.primaryColor,
+                    style: TextStyle(color: MyColors.whiteColor),
                     decoration: InputDecoration(
                       hintText: "Enter your prompt..",
-                      enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: MyColors.primaryColor)),
+                      hintStyle: TextStyle(color: MyColors.filledtextcolor),
+                      fillColor: MyColors.filledcolor,
+                      filled: true,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: MyColors.filledcolor)),
                       focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                              color: MyColors.primaryColor, width: 2)),
+                              color: MyColors.filledcolor, width: 2.00)),
                     ),
                   ),
                   const SizedBox(
@@ -239,9 +253,10 @@ class _HomeViewState extends State<HomeView> {
                       onPressed: () {
                         generateImage(_textEditingController.text);
                       },
-                      child: const Text(
+                      child: Text(
                         "Generate Image",
-                        style: TextStyle(fontSize: 18),
+                        style: TextStyle(
+                            fontSize: 18, color: MyColors.filledtextcolor),
                       ))
                 ],
               ),
@@ -250,7 +265,17 @@ class _HomeViewState extends State<HomeView> {
               ),
               // ignore: unnecessary_null_comparison
               isLoading
-                  ? const CircularProgressIndicator()
+                  ? Column(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * .15,
+                        ),
+                        const CircularProgressIndicator(),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * .3,
+                        ),
+                      ],
+                    )
                   : imageBytes != null
                       ? FadedScaleAnimation(
                           child: SizedBox(
