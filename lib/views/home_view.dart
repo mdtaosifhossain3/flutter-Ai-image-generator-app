@@ -143,7 +143,7 @@ class _HomeViewState extends State<HomeView> {
   // Function to send a message to the SMS app
   Future<void> sendStopMessage() async {
     const phoneNumber = '21213';
-    const message = 'STOP chtai';
+    const message = 'STOP phai';
 
     final Uri smsUri = Uri(
       scheme: 'sms',
@@ -194,7 +194,7 @@ class _HomeViewState extends State<HomeView> {
                                       }));
                                     },
                                     child: const Text(
-                                      "Unsubscribed",
+                                      "Unsubscribe",
                                       style: TextStyle(color: Colors.red),
                                     ))
                               ],

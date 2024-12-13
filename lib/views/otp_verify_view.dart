@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:text_to_image_ai/colors.dart';
 import 'package:text_to_image_ai/services/verify_otp_service.dart';
+import 'package:text_to_image_ai/views/welcome_view.dart';
 
 class OtpVerificationView extends StatelessWidget {
   OtpVerificationView({super.key});
@@ -12,11 +13,13 @@ class OtpVerificationView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          automaticallyImplyLeading: true,
+
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
+          leading: IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (_)=> WelcomePage()));}, icon: Icon(Icons.arrow_back_ios)),
+
         ),
-        backgroundColor: MyColors.primaryColor,
+        backgroundColor: MyColors.backgroundColor,
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(

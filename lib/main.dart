@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:text_to_image_ai/views/splash_view.dart';
+import 'package:text_to_image_ai/views/welcome_view.dart';
 
 void main() async {
   await dotenv.load(fileName: '.env');
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const SplashView(),
+      home:  SplashView(),
     );
   }
 }

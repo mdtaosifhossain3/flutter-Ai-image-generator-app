@@ -12,9 +12,10 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyColors.primaryColor,
+      appBar: AppBar(automaticallyImplyLeading: false,backgroundColor: Colors.transparent,surfaceTintColor: Colors.transparent,),
+      backgroundColor: MyColors.backgroundColor,
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: SingleChildScrollView(
           child: Container(
             constraints: BoxConstraints(
@@ -59,7 +60,8 @@ class WelcomePage extends StatelessWidget {
                             contentPadding: const EdgeInsets.only(left: 15),
                             fillColor: MyColors.whiteColor,
                             filled: true,
-                            hintText: "Enter your phone number...",
+                            hintText: "Enter Robi/Airtel Number...",
+
                             hintStyle: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,

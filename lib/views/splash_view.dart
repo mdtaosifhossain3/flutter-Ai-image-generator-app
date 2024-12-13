@@ -19,7 +19,7 @@ class _SplashViewState extends State<SplashView> {
   void initState() {
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) {
-        return OtpVerificationView();
+        return WelcomePage();
       }));
     });
     super.initState();
@@ -28,7 +28,7 @@ class _SplashViewState extends State<SplashView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyColors.primaryColor,
+      backgroundColor: MyColors.backgroundColor,
       body: Center(
         child: FadeAnimation(
           child: Image.asset(
