@@ -87,7 +87,7 @@ class VerifyOTPService {
           const SnackBar(content: Text('Successfully Subscribed')),
         );
       } else {
-        Navigator.pop(context);
+        //  Navigator.pop(context);
         // print(response.body); // Error occurred
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Enter a valid OTP')),

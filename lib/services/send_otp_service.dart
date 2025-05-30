@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -81,6 +82,8 @@ class SendOTPService {
       var body = response.body;
       final statusCode = _extractValue(body, 'Status code').trim();
       final result = statusCode.replaceAll(":", "").trim();
+      Navigator.pop(context);
+
       if (result == "S1000") {
         final ref = _extractValue(body, 'Reference number');
         final refResult = ref.replaceAll(":", "").trim();
@@ -95,7 +98,6 @@ class SendOTPService {
           const SnackBar(content: Text('OTP sent successfully')),
         );
       } else if (result == "E1351") {
-        Navigator.pop(context);
         //OTP Verification Page
         Navigator.push(context, MaterialPageRoute(builder: (_) {
           return const HomeView();
@@ -105,7 +107,7 @@ class SendOTPService {
         );
       } else {
         //  print(response.body); // Error occurred
-        Navigator.pop(context);
+        //  Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Please Enter a valid Robi/Airtel Number')),
@@ -113,15 +115,22 @@ class SendOTPService {
       }
     } on SocketException catch (e) {
       Navigator.pop(context);
-      
+      if (kDebugMode) {
+        print(e);
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Network Issue')),
+        const SnackBar(content: Text('Network Issue')),
       );
     } catch (e) {
       Navigator.pop(context);
       // Handle error in case of network issues
       ScaffoldMessenger.of(context).showSnackBar(
-       const SnackBar(content: Text('Something went wrong.')),
+        const SnackBar(
+          content: Text(
+            'Something went wrong.',
+          ),
+        ),
       );
     }
   }

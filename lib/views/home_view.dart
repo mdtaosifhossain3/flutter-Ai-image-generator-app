@@ -4,14 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:popover/popover.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:text_to_image_ai/colors.dart';
 import 'package:http/http.dart' as http;
-import 'package:text_to_image_ai/main.dart';
 import 'package:text_to_image_ai/views/welcome_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -89,7 +88,7 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  Future<void> saveImageToGallery() async {
+  Future<void> saveImageToGallery(context) async {
     // Request storage permission
     final status = await Permission.storage.request();
     if (status.isGranted) {
@@ -105,7 +104,7 @@ class _HomeViewState extends State<HomeView> {
         final file = File(filePath);
         await file.writeAsBytes(imageBytes!);
         //  await ImageGallerySaver.saveFile(filePath);
-        await ImageGallerySaverPlus.saveFile(filePath);
+        await Gal.putImage(filePath);
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text("Saved to Gallery")));
       } on SocketException catch (e) {
@@ -141,7 +140,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   // Function to send a message to the SMS app
-  Future<void> sendStopMessage() async {
+  Future<void> sendStopMessage(context) async {
     const phoneNumber = '21213';
     const message = 'STOP phai';
 
@@ -164,169 +163,320 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color(0xff455A64),
-        foregroundColor: MyColors.whiteColor,
-        elevation: 10.0,
+        backgroundColor: const Color(0xff232526),
+        elevation: 8,
         centerTitle: true,
-        title: const Text(
-          "Text to Image Generator",
-          style: TextStyle(fontWeight: FontWeight.bold),
+        toolbarHeight: 70,
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [MyColors.primaryColor, MyColors.whiteColor],
+          ).createShader(bounds),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // const Icon(Icons.image, size: 32, color: Colors.white),
+
+              ClipRRect(
+                borderRadius: BorderRadius.circular(100),
+                child: Image.asset(
+                  "assets/images/logo.png",
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                "DreamSnap",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 26,
+                  color: Colors.white,
+                  letterSpacing: 2,
+                  fontFamily: "Montserrat",
+                  shadows: [
+                    Shadow(
+                      blurRadius: 8,
+                      color: MyColors.primaryColor.withValues(alpha: 0.5),
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           Builder(
             builder: (context) {
               return IconButton(
-                  onPressed: () async {
-                    await showPopover(
-                        context: context,
-                        bodyBuilder: (context) => Column(
-                              children: [
-                                TextButton(
-                                    onPressed: () async {
-                                      await sendStopMessage();
-                                      await Future.delayed(
-                                          const Duration(seconds: 6));
-                                      Navigator.push(context,
-                                          MaterialPageRoute(builder: (_) {
-                                        return WelcomePage();
-                                      }));
-                                    },
-                                    child: const Text(
-                                      "Unsubscribe",
-                                      style: TextStyle(color: Colors.red),
-                                    ))
-                              ],
-                            ),
-                        width: 120,
-                        height: 50,
-                        backgroundColor: MyColors.blackColor,
-                        direction: PopoverDirection.bottom);
-                  },
-                  icon: const Icon(
-                    Icons.more_vert,
-                    color: Colors.black,
-                  ));
+                onPressed: () async {
+                  await showPopover(
+                    context: context,
+                    bodyBuilder: (context) => Column(
+                      children: [
+                        TextButton(
+                          onPressed: () async {
+                            final navigator = Navigator.of(context);
+                            await sendStopMessage(context);
+                            await Future.delayed(const Duration(seconds: 6));
+                            navigator.push(MaterialPageRoute(builder: (_) {
+                              return WelcomePage();
+                            }));
+                          },
+                          child: const Text(
+                            "Unsubscribe",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        )
+                      ],
+                    ),
+                    width: 120,
+                    height: 50,
+                    backgroundColor: MyColors.blackColor,
+                    direction: PopoverDirection.bottom,
+                  );
+                },
+                icon: Icon(
+                  Icons.more_vert,
+                  color: MyColors.whiteColor,
+                ),
+              );
             },
           )
         ],
       ),
-      backgroundColor: MyColors.backgroundColor,
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Column(
-                children: [
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  TextFormField(
-                    controller: _textEditingController,
-                    cursorColor: MyColors.primaryColor,
-                    style: TextStyle(color: MyColors.whiteColor),
-                    decoration: InputDecoration(
-                      hintText: "Enter your prompt..",
-                      hintStyle: TextStyle(color: MyColors.filledtextcolor),
-                      fillColor: MyColors.filledcolor,
-                      filled: true,
-                      border: OutlineInputBorder(
-                          borderSide: BorderSide(color: MyColors.filledcolor)),
-                      focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                              color: MyColors.filledcolor, width: 2.00)),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xff232526), Color(0xff414345)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 80),
+                // Glassmorphism Card
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.all(24),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      width: 1.5,
                     ),
                   ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 13, horizontal: 15),
-                          backgroundColor: MyColors.blackColor,
-                          foregroundColor: MyColors.whiteColor,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                      onPressed: () {
-                        generateImage(_textEditingController.text);
-                      },
-                      child: Text(
-                        "Generate Image",
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _textEditingController,
+                        cursorColor: MyColors.primaryColor,
                         style: TextStyle(
-                            fontSize: 18, color: MyColors.filledtextcolor),
-                      ))
-                ],
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              // ignore: unnecessary_null_comparison
-              isLoading
-                  ? Column(
-                      children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * .15,
+                          color: MyColors.whiteColor,
+                          fontSize: 18,
                         ),
-                        const CircularProgressIndicator(),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * .3,
-                        ),
-                      ],
-                    )
-                  : imageBytes != null
-                      ? FadedScaleAnimation(
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * .5,
-
-                            child: Image.memory(
-                              imageBytes!,
-                            ), // Display the image from memory
+                        decoration: InputDecoration(
+                          hintText: "Describe your dream image...",
+                          hintStyle: TextStyle(
+                            color:
+                                MyColors.filledtextcolor.withValues(alpha: 0.7),
+                            fontSize: 16,
                           ),
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.08),
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 18, horizontal: 20),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            borderSide: BorderSide.none,
+                          ),
+                          prefixIcon:
+                              Icon(Icons.edit, color: MyColors.primaryColor),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: MyColors.primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 8,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          onPressed: () {
+                            generateImage(_textEditingController.text);
+                          },
+                          icon: const Icon(Icons.auto_awesome, size: 26),
+                          label: const Text(
+                            "Generate Image",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Image or Loader
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  child: isLoading
+                      ? Column(
+                          key: const ValueKey('loading'),
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * .15,
+                            ),
+                            const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 4,
+                            ),
+                            const SizedBox(height: 32),
+                            const Text(
+                              "Generating your masterpiece...",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        )
+                      : imageBytes != null
+                          ? FadedScaleAnimation(
+                              key: const ValueKey('image'),
+                              child: Container(
+                                width: MediaQuery.of(context).size.width * 0.85,
+                                height:
+                                    MediaQuery.of(context).size.height * .45,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.25),
+                                      blurRadius: 24,
+                                      offset: const Offset(0, 12),
+                                    ),
+                                  ],
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.18),
+                                    width: 2,
+                                  ),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Image.memory(
+                                  imageBytes!,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 24),
+                // Action Buttons
+                AnimatedOpacity(
+                  opacity: imageBytes != null ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 400),
+                  child: imageBytes != null
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _GlassIconButton(
+                              icon: Icons.download_rounded,
+                              color: MyColors.primaryColor,
+                              onTap: () => saveImageToGallery(context),
+                              tooltip: "Save to Gallery",
+                            ),
+                            const SizedBox(width: 24),
+                            _GlassIconButton(
+                              icon: Icons.share_rounded,
+                              color: Colors.white,
+                              onTap: shareImage,
+                              tooltip: "Share",
+                            ),
+                          ],
                         )
                       : const SizedBox.shrink(),
-              const SizedBox(
-                height: 10,
-              ),
-              imageBytes != null
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                              color: MyColors.blackColor,
-                              borderRadius: BorderRadius.circular(8)),
-                          child: IconButton(
-                              onPressed: saveImageToGallery,
-                              icon: Icon(
-                                Icons.download,
-                                color: MyColors.primaryColor,
-                                size: 30,
-                              )),
-                        ),
-                        const SizedBox(
-                          width: 15,
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                              color: MyColors.blackColor,
-                              borderRadius: BorderRadius.circular(8)),
-                          child: IconButton(
-                              onPressed: shareImage,
-                              icon: Icon(
-                                Icons.share,
-                                color: MyColors.whiteColor,
-                                size: 30,
-                              )),
-                        ),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
-            ],
+                ),
+                const SizedBox(height: 48),
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// Add this widget at the end of the file for glassy icon buttons:
+class _GlassIconButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  final String tooltip;
+  const _GlassIconButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.13),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.18),
+              width: 1.2,
+            ),
+          ),
+          child: Icon(icon, color: color, size: 30),
         ),
       ),
     );
